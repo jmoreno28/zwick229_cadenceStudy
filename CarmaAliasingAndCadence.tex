@@ -1,0 +1,33 @@
+\documentclass[]{article}
+\usepackage{graphicx}
+%opening
+\title{Testing aliasing and sparsity tolerance in CARMA modelling of AGN lightcuvres}
+\author{}
+
+\begin{document}
+
+\maketitle
+
+
+This is a cadence study to test and quantify the answer to the question what is the minimum amount of information needed to accurately infer parameter probabilities to do AGN science using lightcurve analysis?  AGN lightcurves have been characterized using estimates of the Power Spectral Density, many forms of the Structure Function, and Autoregressive models to directly fit the lightcurve.  Our largest ensembles of lightcurves come from ground based surveys which are irregular and gappy but provide some of the longest temporal baselines.   Historically, it has been shown that the simplest models i.e. broken power laws and Damped Random walks are not appropriate for all signatures of observed AGN variability, not even for a majority.  In fact, there seems to be a relationship between the cadence of some surveys like SDSS and the finding that DRW are sufficiently complex models.  Intuitively, one can hypothesize that for a finite series of data something comparable to aliasing may occur even with an irregular cadence that preferentially samples some frequencies and little to no data at others.  Ideally, to avoid aliasing even with irregular cadences given that we have limited observing windows what we want is uniform (tophat) distribution of data collected over different frequencies or time lags.  Sparsity directly relates to this issue since too many gaps of the same size such as seasonal gaps due to weather or visibility on the sky will mean that certain frequency will be under resolved leading to coincidently correlated looking sequential observations separated by large gaps.  Sparse sampling of a finite series of processes operating on timescales greater than 5 times the length of the lightcurve even in the simplest case ie something exhibiting harmonic behavior lead to very poorly inferred parameters for these three most extensively used characterizations.  
+
+When it comes to CARMA modelling, we are assured that these model are robust to irregular cadences. They are even preferred over even regular sampling which will cause aliasing including a once a day cadence.  But there our intuition to suspect gappy, heteroskedatic data is correct.  If we start observe a continuous process with less and less data we are surely to hit a threshold below which we lost too much precision and cannot reliably use parameter estimates.  According to economists the reverse is true as well, above a certain threshold we do not grain significant precision of our parameter probabilities but the cost to fit more data still scales linearly.  Testing to find this optimal bandwidth for irregular cadence and how it may depend on prior information about dampening timescales or harmonic frequencies  is the goal of this study.   
+
+        \begin{figure}
+        	% To include a figure from a file named example.*
+        	% Allowable file formats are eps or ps if compiling using latex
+        	% or pdf, png, jpg if compiling using pdflatex
+        	\includegraphics[width=\textwidth]{zwick.png}
+        	\caption{Full Kepler Lightcurve with approximately 60,000 observations in a temporal window of 3.4 yrs.  Cadence is nearly regular with 30 min sampling.  This is the best resolved and well studied AGN lightcurve.  We will use this data and simulated lightcurves to study quantify aliasing like effects with "regular" down sampling and compare it to precision loss with constrained irregular cadence.  We compare the same density of observations for the full length of the real and mock lightcurves.   }
+        	\label{fig:example_figure}
+        \end{figure}        
+	     \begin{figure}
+	     	% To include a figure from a file named example.*
+	     	% Allowable file formats are eps or ps if compiling using latex
+	     	% or pdf, png, jpg if compiling using pdflatex
+	     	\includegraphics[width=\textwidth]{zwick20.png}
+	     	\caption{For comparison, here we plot a down sampled version of the lightcurve with a regular cadence.  We remove all but 200 points from the lightcurve.  We start with this density of points as an initial guess for the the minimum number of points needed to recover an accurate fit of the lightcurve parameter probabilities with in x tolerance. }
+	     	\label{fig:example_figure}
+	     \end{figure}   
+        
+\end{document}
