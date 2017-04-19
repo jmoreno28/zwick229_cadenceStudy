@@ -81,44 +81,88 @@ def smart_irreg_sampler(df, ocillatorP, N):
 	print("Number of points in the lightcurve")
 	print(len(newdf))
 	return np.require(newdf.as_matrix(newdf.columns), requirements=['F', 'A', 'W', 'O', 'E']) 	
+	
+def chop(data):
+    	days = 100 
+    	start = np.random.randint(0, high=len(data) - days*30)
+    	stop = int(days*30)
+    	sliceofpi = data.iloc[start:start+stop]
+   	length = len(sliceofpi)
+   	
+    	#return sliceofpi
+    	return np.require(sliceofpi .as_matrix(sliceofpi .columns), requirements=['F', 'A', 'W', 'O', 'E']) 	
 
 
+
+#------------------------------------------------------------------
 class csvLC(kali.lc.lc):
 
     def _read(self, name, path , skipNrows,downsample,N):
         fileName = name
-        fileNameCSV = ''.join([fileName[0:-3], 'csv'])
+        fileNameCSV = ''.join([fileName[0:-3], 'dat'])
         filePathCSV = os.path.join(path, fileNameCSV)
         
-        dataInFile  = np.loadtxt(filePathCSV,delimiter=',',skiprows=skipNrows)
-	zcols = [ 't', 'cadence', 'y', 'yerr']
+        dataInFile  = np.loadtxt(filePathCSV,delimiter=' ',skiprows=skipNrows)
+	#zcols = [ 't', 'cadence', 'y', 'yerr']
+	zcols = [ 'cadence','mask' ,'cal_time' ,'y' ,'y_err','t',' time_err']
 	df = pandas.DataFrame(data=dataInFile,columns=zcols, dtype=float)
         
-        if downsample == True:
+        #samplers 
+        
+        if downsample == 'smart' :
         	dataInFile0 = smart_irreg_sampler(df, 60, N)
         	dataInFile = np.empty(dataInFile0.shape)
-        	dataInFile = dataInFile0
-        irr_downsample =1	
-        if irr_downsample == 0:
+        	dataInFile = dataInFile0	
+        if downsample == 'irregular' :
         	dataInFile0 = irreg_sampler(df, 60, N)
         	dataInFile = np.empty(dataInFile0.shape)
         	dataInFile = dataInFile0	
+        if downsample == 'regular' :	
+        	dataInFile0 = reg_sampler(df, 60, N)
+        	dataInFile = np.empty(dataInFile0.shape)
+        	dataInFile = dataInFile0	
+        if downsample == 'chop' :
+        	dataInFile0 = chop(df)
+        	dataInFile = np.empty(dataInFile0.shape)
+        	dataInFile = dataInFile0	
+        
         	
-        #IF STATEMENT DOWNSAMPLE OR NOT 
         self._numCadences = dataInFile.shape[0]
 
         startT = -1.0
         lineNum = 0
         while startT == -1.0:
-            startTCand = dataInFile[lineNum][0]
-            startTCandNext = dataInFile[lineNum + 1][0]
+            startTCand = dataInFile[lineNum][5]
+            startTCandNext = dataInFile[lineNum + 1][5]
             if not np.isnan(startTCand) and not np.isnan(startTCandNext):
                 startT = float(startTCand)
                 dt = float(startTCandNext) - float(startTCand)
             else:
                 lineNum += 1
         self.startT = startT
-        self._dt = dt  # Increment between epochs.
+        self._dt = dt/(1.0 + self.z)   # Increment between epochs.
+        
+        cadence = np.require(np.zeros(self.numCadences), requirements=['F', 'A', 'W', 'O', 'E'])
+        t = np.require(np.zeros(self.numCadences), requirements=['F', 'A', 'W', 'O', 'E'])
+        terr = np.require(np.zeros(self.numCadences), requirements=['F', 'A', 'W', 'O', 'E'])
+    	x = np.require(np.zeros(self.numCadences), requirements=['F', 'A', 'W', 'O', 'E'])
+        y = np.require(np.zeros(self.numCadences), requirements=['F', 'A', 'W', 'O', 'E'])
+        yerr = np.require(np.zeros(self.numCadences), requirements=['F', 'A', 'W', 'O', 'E'])
+        mask = np.require(np.zeros(self.numCadences), requirements=[
+                               'F', 'A', 'W', 'O', 'E'])  # Numpy array of mask values.
+        
+        for i in xrange(self.numCadences):
+            dataLine = dataInFile[i]
+            cadence[i] = int(dataLine[0])
+            t[i] = float(dataLine[5]) - self.startT
+            terr[i] = float(dataLine[6])
+            y[i] = float(dataLine[3])
+            yerr[i] = float(dataLine[4])
+            mask[i] = int(dataLine[1])
+            
+        w = np.where(mask[:] == 1)[0]
+        self.numCadences = len(w)
+        
         self.cadence = np.require(np.zeros(self.numCadences), requirements=['F', 'A', 'W', 'O', 'E'])
         self.t = np.require(np.zeros(self.numCadences), requirements=['F', 'A', 'W', 'O', 'E'])
         self.terr = np.require(np.zeros(self.numCadences), requirements=['F', 'A', 'W', 'O', 'E'])
@@ -127,19 +171,20 @@ class csvLC(kali.lc.lc):
         self.yerr = np.require(np.zeros(self.numCadences), requirements=['F', 'A', 'W', 'O', 'E'])
         self.mask = np.require(np.zeros(self.numCadences), requirements=[
                                'F', 'A', 'W', 'O', 'E'])  # Numpy array of mask values.
-         
-    	for i in xrange(self.numCadences):
-            dataLine = dataInFile[i]
-            self.cadence[i] = int(dataLine[1])
-            self.t[i] = float(dataLine[0]) - self.startT
-            self.terr[i] = float(0)
-            self.y[i] = float(dataLine[2])
-            self.yerr[i] = float(dataLine[3])
-            self.mask[i] = 1.0 
-                    
-        #self.cadence = np.arange(0, len(dataInFile), dtype=int)
         
-       
+        
+        # to make kali run faster delete any masked points, also this will take care of times values that are set to zero for masked fluxes
+        #mask only checked for fluxes not for time values: code will hang up for nans or timestamps that are set to zero       
+        self.mask = mask[w]     
+        self.cadence  = np.arange(0,len(w))
+    	self.t = t[w]
+    	self.terr = terr[w] 
+    	self.y = y[w] 
+        self.yerr = yerr[w]   
+            
+	for i in xrange(len(self.t)):
+            self.t[i] = self.t[i]/(1.0 + self.z)         
+            
 
     def read(self, name, path=None,skipNrows=0, downsample=False, N=50 ,**kwargs):
         self.z = kwargs.get('z', 0.0)
@@ -173,8 +218,7 @@ class csvLC(kali.lc.lc):
         else:
             raise ValueError('csv light curve not found!')
             
-        for i in xrange(self._numCadences):
-            self.t[i] = self.t[i]/(1.0 + self.z)
+
         
 
 

@@ -157,61 +157,21 @@ if (args.qMin < 0):
 #Load target list ids
 
 
-zwick = np.loadtxt('iizw229015_kepler_q04_q17.csv',delimiter=',')
-zcols = [ 't', 'cadence', 'y', 'yerr']
-zwickdata = pandas.DataFrame(data=zwick,columns=zcols)
-zwickplot = plotlc(zwickdata['t'],zwickdata['y'],mask=1, name = 'Zwicky 229.15')
-plt.savefig('zwick.png')
 
 Number = 10
-downsampled = False
-k2lc = kali.csvLC.csvLC(name='iizw229015_kepler_q04_q17.csv', path='/Users/Jackster/Research/code/k2/python/zwicky', downsample=downsampled,N=Number)
+downsampled = 'regular'
+k2lc = kali.csvLC.csvLC(name='kplr006932990Carini-calibrated.dat', path='/Users/Jackster/Research/code/k2/python/cadenceStudy/', downsample=downsampled,N=Number, z=0.3056)
 
-def chop(data,mask):
-    mask0 = np.zeros(len(mask))
-    days = 100 
-    start = np.random.randint(0, high=len(data) - days*30)
-    stop = int(days*30)
-    print stop
-    print len(data)
-    sliceofpi = data.loc[start:start+stop]
-    length = len(sliceofpi)
-    mask0[:length] = 1.0 
-    return sliceofpi, mask0
-pi, mask = chop(zwickdata, k2lc.mask)
-piplot = plotlc(pi['t'],pi['y'],mask=1, name = 'Zwicky 229.15')
-plt.savefig('zwick_chunkworksss.png')
+k2lc.minTimescale = args.minTimescale
+k2lc.maxTimescale = args.maxTimescale
+k2lc.maxSigma = args.maxSigma
 
-
+plt.scatter(k2lc.t,k2lc.y)
+plt.savefig("importedTEST.png")
 plt.clf()
 
-plt.plot(k2lc.t, k2lc.y, "k")
-plt.savefig('poop_downsampled.png')
 
-#reset K2LC
-#k2lc.mask = mask
-#k2lc.y[:len(pi)] = pi['y']
 
-#k2lc.yerr[:len(pi)] = pi['yerr']
-
-#k2lc.t[:len(pi)] = pi['t']-pi['t'].iloc[0]
-
-#w = np.where(k2lc.mask == 1.0)[0]
-#plt.clf()
-#k2plot = plotlc(k2lc.t[w],k2lc.y[w],mask=1, name = 'Zwicky 229.15')
-#plt.savefig('k2zwick_chunk.png')
-#plt.clf()
-#correct other timescale params 
-#sigma = maxSigma*var(lc)
-#k2lc.startT = 0.
-#k2lc._dt = 100.0## Increment between epochs.
-#k2lc._mindt = 0.02
-#k2lc._maxdt = 3010.
-#k2lc._T = pi['t'].iloc[-1] - pi['t'].iloc[0] ## Total duration of the light curve.
-#k2lc._numCadences = len(k2lc.y)
-#self.cadence = 0.02
-
-#k2lc.maxT = args.maxT
 
 taskDict = dict()
 DICDict= dict()
@@ -247,8 +207,8 @@ for p in xrange(args.pMin, args.pMax + 1):
 		#print labelList
 
 	figTitle = str("zw229")
-	if downsampled == True :
-		figTitle = str(figTitle +"smartirregular"+str(Number))
+	if downsampled != False :
+		figTitle = str(figTitle +downsampled+str(Number))
 	fname = str(figTitle+"-"+'%i-%i'%(p, q)+'Timescales')
 	fname2 = str(figTitle+"-"+'%i-%i'%(p, q)+'Chains')
 	output = open(fname+'.pkl', 'wb')
