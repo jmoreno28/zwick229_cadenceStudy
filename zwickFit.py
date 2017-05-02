@@ -112,7 +112,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-id', '--id', type=str, default='iizw229015_kepler_q04_q17', help=r'pass filename as -id arg')
 parser.add_argument('-z', '--z', type=float, default='0.3056', help=r'object redshift')
 parser.add_argument('-skiprows', '--skiprows',  type=int, default='0', help=r'how many rows to skip in csv file')
-
+parser.add_argument('-N', '--N',  type=int, default='0', help=r'number of points per period')
+parser.add_argument('-sampler', '--sampler',  type=str, default='0', help=r'sampler type : chop, regular , irregular, smart')
 # params for CARMA fit and plotting
 parser.add_argument('-libcarmaChain', '--lC', type = str, default = 'libcarmaChain', help = r'libcarma Chain Filename')
 parser.add_argument('-nsteps', '--nsteps', type = int, default =500, help = r'Number of steps per walker')
@@ -158,17 +159,14 @@ if (args.qMin < 0):
 
 
 
-Number = 10
-downsampled = 'regular'
+Number = args.N
+downsampled = args.sampler
 k2lc = kali.csvLC.csvLC(name='kplr006932990Carini-calibrated.dat', path='/Users/Jackster/Research/code/k2/python/cadenceStudy/', downsample=downsampled,N=Number, z=0.3056)
 
 k2lc.minTimescale = args.minTimescale
 k2lc.maxTimescale = args.maxTimescale
 k2lc.maxSigma = args.maxSigma
 
-plt.scatter(k2lc.t,k2lc.y)
-plt.savefig("importedTEST.png")
-plt.clf()
 
 
 
@@ -211,13 +209,22 @@ for p in xrange(args.pMin, args.pMax + 1):
 		figTitle = str(figTitle +downsampled+str(Number))
 	fname = str(figTitle+"-"+'%i-%i'%(p, q)+'Timescales')
 	fname2 = str(figTitle+"-"+'%i-%i'%(p, q)+'Chains')
+	fname3 = str(figTitle+"-"+'%i-%i'%(p, q)+'roots')
 	output = open(fname+'.pkl', 'wb')
 	pickle.dump(np.array(taskDict['%i %i'%(p, q)].timescaleChain),output)
 	output.close()
 	output2 = open(fname2+'.pkl', 'wb')
 	pickle.dump(np.array(taskDict['%i %i'%(p, q)].Chain),output2)
 	output2.close()
-
+	output3 = open(fname3+'.pkl', 'wb')
+	pickle.dump(np.array(taskDict['%i %i'%(p, q)].rootChain),output3)
+	output3.close()
+	
+plt.clf()
+plt.scatter(k2lc.t,k2lc.y)
+plt.ylim([5.3e-7,8.2e-07])
+plt.savefig(figTitle+".png")
+plt.clf()
 sortedDICVals = sorted(DICDict.items(), key = operator.itemgetter(1))
 pBest = int(sortedDICVals[0][0].split()[0])
 qBest = int(sortedDICVals[0][0].split()[1])
